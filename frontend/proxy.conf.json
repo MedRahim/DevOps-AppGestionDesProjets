@@ -1,0 +1,6 @@
+{
+  "/entreprise": { "target": "http://localhost:8080", "secure": false },
+  "/equipe": { "target": "http://localhost:8080", "secure": false },
+  "/projet": { "target": "http://localhost:8080", "secure": false },
+  "/projet-detaille": { "target": "http://localhost:8080", "secure": false }
+}
