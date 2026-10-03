@@ -75,13 +75,17 @@ pipeline {
                                                   usernameVariable: 'DH_USER',
                                                   passwordVariable: 'DH_PASS')]) {
                     sh 'echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin'
-                    sh 'docker compose push backend frontend'
-                    sh '''
-                        for img in gp-backend gp-frontend; do
-                          docker tag $DOCKER_USER/$img:$IMAGE_TAG $DOCKER_USER/$img:latest
-                          docker push $DOCKER_USER/$img:latest
-                        done
-                    '''
+                    retry(3) {
+                        sh 'docker compose push backend frontend'
+                    }
+                    retry(3) {
+                        sh '''
+                            for img in gp-backend gp-frontend; do
+                              docker tag $DOCKER_USER/$img:$IMAGE_TAG $DOCKER_USER/$img:latest
+                              docker push $DOCKER_USER/$img:latest
+                            done
+                        '''
+                    }
                 }
             }
         }
