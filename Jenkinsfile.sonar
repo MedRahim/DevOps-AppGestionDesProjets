@@ -18,25 +18,13 @@ pipeline {
 
         stage('Tests') {
             steps {
-                sh '''
-                    docker rm -f ci-mysql >/dev/null 2>&1 || true
-                    docker run -d --name ci-mysql -p 3307:3306 \
-                        -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db mysql:8.0
-                    for i in $(seq 1 60); do
-                        docker exec ci-mysql mysql -h127.0.0.1 -uroot -proot -e "SELECT 1" >/dev/null 2>&1 && break
-                        sleep 3
-                    done
-                '''
                 dir('backend') {
-                    withEnv(['SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3307/test_db?createDatabaseIfNotExist=true']) {
-                        sh 'mvn -B test'
-                    }
+                    sh 'mvn -B test'
                 }
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
-                    sh 'docker rm -f ci-mysql || true'
                 }
             }
         }
