@@ -1,3 +1,5 @@
+name: gestion-projets
+
 services:
   mysql:
     image: mysql:8.0
