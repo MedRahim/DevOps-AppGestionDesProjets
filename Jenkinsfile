@@ -17,7 +17,7 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    sh 'mvn -B clean package -DskipTests'
+                    sh 'mvn -B clean compile'
                 }
             }
         }
@@ -31,6 +31,39 @@ pipeline {
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                sh '''
+                    docker start sonarqube >/dev/null 2>&1 || true
+                    for i in $(seq 1 60); do
+                        curl -s http://localhost:9000/api/system/status | grep -q '"UP"' && break
+                        sleep 10
+                    done
+                '''
+                dir('backend') {
+                    withSonarQubeEnv('SonarQube') {
+                        sh 'mvn -B sonar:sonar'
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package Backend') {
+            steps {
+                dir('backend') {
+                    sh 'mvn -B package -DskipTests'
                 }
             }
         }
@@ -50,7 +83,7 @@ pipeline {
             }
         }
 
-        // ===================== CD (Docker) =====================
+        // ===================== CD =====================
         stage('Build Docker Images') {
             steps {
                 sh 'docker compose build'
